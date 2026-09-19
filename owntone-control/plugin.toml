@@ -7,6 +7,7 @@ license     = "MIT"
 icon        = "music"
 description = "Play/pause, volume, now-playing, and audio outputs panel for OwnTone — no browser needed."
 tags        = ["bar", "audio", "network", "panel", "utility"]
+dependencies = []
 
 # Plugin-wide settings (readable from service, widget, and panel).
 [[setting]]
