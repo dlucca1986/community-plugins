@@ -10,6 +10,7 @@ local draftVolume = nil
 local draftOutputVolumes = {}
 local currentArtworkPath = nil
 local lastArtworkUrl = nil
+local artworkRevision = 0
 local localProgressMs = 0
 local lastProgressSyncMs = 0
 
@@ -521,8 +522,11 @@ local function ensureArtwork(artUrl)
     lastArtworkUrl = nil
     return
   end
-  if artUrl == lastArtworkUrl and currentArtworkPath ~= nil and noctalia.fileInfo(currentArtworkPath) ~= nil then
-    return
+  if artUrl == lastArtworkUrl and currentArtworkPath ~= nil then
+    local info = noctalia.fileInfo(currentArtworkPath)
+    if info ~= nil and info.size > 0 then
+      return
+    end
   end
 
   local fullUrl = artUrl
@@ -543,11 +547,22 @@ local function ensureArtwork(artUrl)
 
   local dir = noctalia.pluginDataDir()
   noctalia.mkdirAll(dir)
-  local dest = dir .. "/nowplaying.jpg"
+  -- Alternate between two filenames so a new download never truncates the
+  -- file the UI tree is currently reading (was "nowplaying.jpg" for every
+  -- track, causing intermittent 0-byte image-load failures mid-download).
+  artworkRevision = (artworkRevision + 1) % 2
+  local dest = dir .. "/nowplaying-" .. tostring(artworkRevision) .. ".jpg"
+  local revision = artworkRevision
 
   lastArtworkUrl = artUrl
   noctalia.download(fullUrl, dest, function(ok)
-    if ok and noctalia.fileInfo(dest) ~= nil then
+    if revision ~= artworkRevision then
+      return
+    end
+    -- OwnTone returns HTTP 204 (empty body, still "ok") when a track has no
+    -- artwork; treat a zero-byte result the same as a failed download.
+    local info = ok and noctalia.fileInfo(dest) or nil
+    if info ~= nil and info.size > 0 then
       currentArtworkPath = dest
     else
       currentArtworkPath = nil

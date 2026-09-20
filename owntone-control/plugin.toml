@@ -1,6 +1,6 @@
 id          = "danielel/owntone-control"
 name        = "OwnTone Control"
-version     = "0.3.0"
+version     = "0.3.1"
 plugin_api  = 12
 author      = "danielel"
 license     = "MIT"
